@@ -4,6 +4,9 @@ SpeechRecognition
 geocoder
 twilio
 python-dotenv
+SpeechRecognition
+pyaudio
+
 
 
 
