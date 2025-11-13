@@ -1,14 +1,26 @@
-"""
-Voice Processing Module for SafeCity AI
-Simplified version for Streamlit Cloud
-"""
-
-import streamlit as st
+import speech_recognition as sr
+from config import MAX_RECORDING_TIME
 
 def capture_audio():
-    """
-    Voice input simplified for cloud deployment
-    """
-    st.warning("⚠️ Voice input works best on local version.")
-    st.info("📝 Please use TEXT INPUT for now to test the app.")
-    return None
+    """Capture audio from microphone and return recognized text."""
+    recognizer = sr.Recognizer()
+    try:
+        with sr.Microphone() as source:
+            print("🎤 Listening... Please speak now!")
+            audio = recognizer.listen(source, timeout=MAX_RECORDING_TIME)
+        text = recognizer.recognize_google(audio)
+        print(f"✅ Recognized: {text}")
+        return text
+    except sr.UnknownValueError:
+        print("❌ Could not understand audio")
+        return None
+    except sr.RequestError as e:
+        print(f"❌ Error: {e}")
+        return None
+
+def process_voice_input():
+    """Process voice input and return recognized message."""
+    message = capture_audio()
+    if message:
+        return message
+    return "Emergency alert - voice recognition failed"
