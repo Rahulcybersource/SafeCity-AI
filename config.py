@@ -1,14 +1,25 @@
 
+import os
+from dotenv import load_dotenv
 
-# LOWER threshold for testing (you can increase later)
-CONFIDENCE_THRESHOLD = 0.60  # Changed from 0.90 to 0.60
+load_dotenv()
 
-# Distress emotions that trigger alerts
-DISTRESS_EMOTIONS = ['fear', 'anger', 'sadness', 'anxiety', 'panic']
+# API Configuration
+GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY", "")
+GUARDIAN_PHONE = os.getenv("GUARDIAN_PHONE", "+0000000000")
 
-# Better emotion model
-EMOTION_MODEL = "bhadresh-savani/distilbert-base-uncased-emotion"
+# Location settings
+DEFAULT_LATITUDE = 0.0
+DEFAULT_LONGITUDE = 0.0
+DEFAULT_ADDRESS = "Unknown Location"
 
-# Voice recording parameters - INCREASED
-VOICE_TIMEOUT = 10  # seconds
-VOICE_PHRASE_LIMIT = 15  # seconds
+# Emotion thresholds
+FEAR_THRESHOLD = 0.6
+ANGER_THRESHOLD = 0.5
+SADNESS_THRESHOLD = 0.5
+
+# Alert settings
+ALERT_TIMEOUT = 10  # seconds
+MAX_RECORDING_TIME = 30  # seconds
+
+
