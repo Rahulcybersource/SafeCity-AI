@@ -1,24 +1,30 @@
-from transformers import pipeline
-
-emotion_classifier = pipeline("zero-shot-classification", model="facebook/bart-large-mnli")
-
 def detect_emotion(text):
-    """Detect emotion from text."""
-    emotions = ["fear", "anger", "sadness", "joy", "neutral"]
-    try:
-        result = emotion_classifier(text, emotions)
-        emotion = result["labels"][0]
-        confidence = result["scores"][0]
-        return {
-            "emotion": emotion,
-            "confidence": confidence,
-            "all_scores": dict(zip(result["labels"], result["scores"]))
-        }
-    except Exception as e:
-        print(f"Error detecting emotion: {e}")
-        return {
-            "emotion": "neutral",
-            "confidence": 0.5,
-            "all_scores": {}
-        }
+    """Simple keyword-based emotion detection."""
+    text_lower = text.lower()
+    
+    emotions_keywords = {
+        "fear": ["help", "danger", "scared", "afraid", "emergency", "911", "rescue"],
+        "anger": ["angry", "mad", "furious", "hate", "attack", "rage"],
+        "sadness": ["sad", "crying", "depressed", "hurt", "pain", "sad"],
+        "joy": ["happy", "great", "love", "wonderful", "excellent"],
+    }
+    
+    emotion_scores = {}
+    for emotion, keywords in emotions_keywords.items():
+        score = sum(1 for keyword in keywords if keyword in text_lower)
+        emotion_scores[emotion] = score / len(keywords)
+    
+    emotion = max(emotion_scores, key=emotion_scores.get)
+    confidence = min(emotion_scores[emotion], 1.0)
+    
+    if confidence == 0:
+        emotion = "neutral"
+        confidence = 0.5
+    
+    return {
+        "emotion": emotion,
+        "confidence": confidence,
+        "all_scores": emotion_scores
+    }
+
 
