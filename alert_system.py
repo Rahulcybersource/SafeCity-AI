@@ -75,12 +75,8 @@ SafeCity AI: Because Safety Can't Wait"""
 from voice_recognizer import recognize_speech_from_mic
 
 # Example integration inside alert creation route or command
-def get_alert_message():
-    message = recognize_speech_from_mic()
-    if not message:
-        message = "Default alert message"
-    return message
 
 # Use get_alert_message() instead of fixed text input for alert message
+
 
 
