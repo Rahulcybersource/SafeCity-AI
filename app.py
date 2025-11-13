@@ -1,199 +1,61 @@
-"""
-SafeCity AI - Main Application
-AI-powered emergency response system
-"""
-
 import streamlit as st
-import os
-from dotenv import load_dotenv
-
-# Import custom modules
-from emotion_detector import detect_emotion
+from alert_system import process_alert
 from voice_processor import capture_audio
-from location_tracker import get_location, get_maps_link
-from alert_system import send_alert
-from config import CONFIDENCE_THRESHOLD, DISTRESS_EMOTIONS
+from emotion_detector import detect_emotion
+from location_tracker import get_location
+from datetime import datetime
 
-# Load environment variables
-load_dotenv()
+st.set_page_config(page_title="SafeCity AI", page_icon="🚨", layout="wide")
 
-# Page configuration
-st.set_page_config(
-    page_title="SafeCity AI",
-    page_icon="🚨",
-    layout="wide",
-    initial_sidebar_state="expanded"
-)
+st.title("🚨 SafeCity AI - Emergency Alert System")
+st.subheader("Prototype 1.0")
 
-# Custom CSS
-st.markdown("""
-    <style>
-    .big-font {
-        font-size:50px !important;
-        font-weight: bold;
-    }
-    .success-box {
-        background-color: #d4edda;
-        padding: 20px;
-        border-radius: 10px;
-        border-left: 5px solid #28a745;
-    }
-    .error-box {
-        background-color: #f8d7da;
-        padding: 20px;
-        border-radius: 10px;
-        border-left: 5px solid #dc3545;
-    }
-    .warning-box {
-        background-color: #fff3cd;
-        padding: 20px;
-        border-radius: 10px;
-        border-left: 5px solid #ffc107;
-    }
-    </style>
-""", unsafe_allow_html=True)
-
-# Title
-st.markdown('<p class="big-font">🚨 SAFE CITY AI</p>', unsafe_allow_html=True)
-st.markdown("### Because Safety Can't Wait")
-st.markdown("---")
-
-# Sidebar configuration
+# Sidebar
 with st.sidebar:
     st.header("⚙️ Settings")
-    
-    guardian_number = st.text_input(
-        "Guardian Phone Number",
-        "+91",
-        help="Include country code (e.g., +91 for India)"
-    )
-    
-    confidence = st.slider(
-        "Alert Confidence Threshold",
-        0.5, 1.0, CONFIDENCE_THRESHOLD,
-        step=0.05,
-        help="Higher = fewer false alarms"
-    )
-    
-    st.divider()
-    st.markdown("**Project Info:**")
-    st.markdown("- **Team:** BOLD")
-    st.markdown("- **Hackathon:** BUILDATHON-2025")
-    st.markdown("- **Theme:** AI for Social Good")
-    st.markdown("- **Model:** DistilBERT (Hugging Face)")
+    user_id = st.text_input("User ID", value="default_user")
+    guardian_phone = st.text_input("Guardian Phone", value="+0000000000")
 
 # Main interface
-col1, col2 = st.columns(2, gap="large")
+col1, col2 = st.columns(2)
 
-# ===== TEXT INPUT SECTION =====
 with col1:
-    st.header("📝 Text Input")
-    st.markdown("Type your message or describe what's happening:")
-    
-    text_input = st.text_area(
-        "Enter message here...",
-        placeholder="e.g., Help me someone is following me",
-        height=150,
-        label_visibility="collapsed"
-    )
-    
-    if st.button("🔍 Analyze Text", key="text_btn", use_container_width=True):
-        if text_input.strip():
-            with st.spinner("Analyzing emotion..."):
-                emotion_result = detect_emotion(text_input)
-            
-            st.divider()
-            
-            # Display emotion detection result
-            st.subheader(f"Detected Emotion: {emotion_result['emotion'].upper()}")
-            st.metric("Confidence", f"{emotion_result['confidence']*100:.1f}%")
-            # Debug: Show all emotion scores
-            if 'all_scores' in emotion_result and emotion_result['all_scores']:
-                st.write("**All Detected Emotions:**")
-                for score in emotion_result['all_scores']:
-                    st.write(f"- {score['label']}: {score['score']*100:.1f}%")
-
-            # Check if distress
-            is_distress = (emotion_result['emotion'].lower() in DISTRESS_EMOTIONS 
-                          and emotion_result['confidence'] >= confidence)
-            
-            if is_distress:
-                st.error("🚨 DISTRESS DETECTED - ALERT TRIGGERED!")
-                
-                # Get location
-                with st.spinner("Fetching location..."):
-                    location = get_location()
-                
-                st.warning(f"📍 Location: {location['address']}")
-                st.info(f"Coordinates: {location['lat']:.4f}, {location['lng']:.4f}")
-                
-                # Send alert button
-                if st.button("📤 SEND ALERT TO GUARDIAN", key="alert_btn", use_container_width=True):
-                    if guardian_number.startswith("+") and len(guardian_number) > 5:
-                        success = send_alert(guardian_number, text_input, location)
-                        if success:
-                            st.balloons()
-                    else:
-                        st.error("❌ Please enter a valid phone number in Settings")
-            else:
-                st.success("✅ No distress detected. You're safe!")
-        else:
-            st.warning("Please enter a message to analyze")
-
-# ===== VOICE INPUT SECTION =====
-with col2:
     st.header("🎤 Voice Input")
-    st.markdown("Click to record your voice:")
-    
-    if st.button("🎙️ START RECORDING", key="voice_btn", use_container_width=True):
-        with st.spinner("Activating microphone..."):
-            voice_text = capture_audio()
+    if st.button("🔴 Record Emergency Alert"):
+        st.info("Recording... Please speak now!")
+        message = capture_audio()
+        if message:
+            st.success(f"✅ Recognized: {message}")
+            st.session_state.message = message
+        else:
+            st.error("❌ Failed to recognize speech")
+
+with col2:
+    st.header("📊 Alert Summary")
+    if "message" in st.session_state:
+        emotion_data = detect_emotion(st.session_state.message)
+        location = get_location()
         
-        if voice_text:
-            st.success(f"✅ You said: *{voice_text}*")
-            
-            st.divider()
-            
-            with st.spinner("Analyzing emotion..."):
-                emotion_result = detect_emotion(voice_text)
-            
-            st.subheader(f"Detected Emotion: {emotion_result['emotion'].upper()}")
-            st.metric("Confidence", f"{emotion_result['confidence']*100:.1f}%")
-            
-            # Check if distress
-            is_distress = (emotion_result['emotion'].lower() in DISTRESS_EMOTIONS 
-                          and emotion_result['confidence'] >= confidence)
-            
-            if is_distress:
-                st.error("🚨 DISTRESS DETECTED - ALERT TRIGGERED!")
-                
-                # Get location
-                with st.spinner("Fetching location..."):
-                    location = get_location()
-                
-                st.warning(f"📍 Location: {location['address']}")
-                st.info(f"Coordinates: {location['lat']:.4f}, {location['lng']:.4f}")
-                
-                # Send alert button
-                if st.button("📤 SEND ALERT TO GUARDIAN", key="voice_alert_btn", use_container_width=True):
-                    if guardian_number.startswith("+") and len(guardian_number) > 5:
-                        success = send_alert(guardian_number, voice_text, location)
-                        if success:
-                            st.balloons()
-                    else:
-                        st.error("❌ Please enter a valid phone number in Settings")
-            else:
-                st.success("✅ No distress detected. You're safe!")
+        st.write(f"**Message:** {st.session_state.message}")
+        st.write(f"**Emotion:** {emotion_data['emotion'].upper()} (Confidence: {emotion_data['confidence']:.2f})")
+        st.write(f"**Location:** {location['address']}")
+        st.write(f"**Safety Score:** {location['safety_score']}/100")
 
-# Footer
-st.markdown("---")
-st.markdown("""
-    <div style="text-align: center; color: gray;">
-    <p>SafeCity AI - An AI-powered emergency response system</p>
-    <p>Team BOLD | Sai Vidya Institute of Technology | BUILDATHON-2025</p>
-    <p><strong>Made with ❤️ for a Safer India</strong></p>
-    </div>
-""", unsafe_allow_html=True)
+# Alert submission
+st.divider()
+if st.button("✅ Submit Alert"):
+    if "message" in st.session_state:
+        with st.spinner("Processing alert..."):
+            alert, success = process_alert(user_id)
+        if success:
+            st.success("✅ Alert sent successfully!")
+            st.json(alert)
+        else:
+            st.error("❌ Failed to send alert")
+    else:
+        st.warning("⚠️ Please record a message first")
 
-
-
+# Alert history
+st.divider()
+st.header("📜 Recent Alerts")
+st.info("Alert history would be displayed here (database integration needed)")
