@@ -1,46 +1,31 @@
-import json
 from datetime import datetime
-from voice_processor import process_voice_input
 from emotion_detector import detect_emotion
 from location_tracker import get_location
-from config import GUARDIAN_PHONE
+from config import GUARDIAN_PHONE, USER_ID
 
-def create_alert(user_id="default_user"):
-    """Create emergency alert from voice input."""
-    # Get voice message
-    message = process_voice_input()
-    
-    # Detect emotion
+def create_alert(message, user_id=USER_ID):
+    """Create emergency alert from message."""
     emotion_data = detect_emotion(message)
-    
-    # Get location
     location = get_location()
     
-    # Create alert object
     alert = {
         "user_id": user_id,
         "message": message,
         "emotion": emotion_data["emotion"],
-        "confidence": emotion_data["confidence"],
+        "confidence": round(emotion_data["confidence"], 2),
         "location": location,
         "timestamp": datetime.utcnow().isoformat(),
         "guardian_phone": GUARDIAN_PHONE,
-        "status": "created"
+        "status": "sent"
     }
-    
     return alert
 
 def send_alert(alert):
-    """Send alert to guardians (mock implementation)."""
-    print(f"📤 Sending alert to {alert['guardian_phone']}")
-    print(f"Alert details: {json.dumps(alert, indent=2)}")
-    # In production, integrate with SMS/notification service
+    """Mock send alert to guardians."""
+    print(f"✅ Alert sent to {alert['guardian_phone']}")
     return True
 
-def process_alert(user_id="default_user"):
-    """Process complete alert workflow."""
-    alert = create_alert(user_id)
-    success = send_alert(alert)
-    return alert, success
+    
+
 
 
