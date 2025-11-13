@@ -4,9 +4,9 @@ SpeechRecognition
 geocoder
 twilio
 python-dotenv
-SpeechRecognition==3.10.0
 
-pyaudio
+
+
 
 
 
